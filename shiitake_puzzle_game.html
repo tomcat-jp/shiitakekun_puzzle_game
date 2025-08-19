@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>🍄 しいたけくんパズル　🍄</title>
+  <style>
+    body { text-align: center; font-family: sans-serif; }
+    canvas { border: 2px solid #333; touch-action: none; }
+    #message { font-size: 20px; margin: 15px; }
+    #tweet { display: none; margin-top: 10px; }
+    #preview { margin: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>🍄 しいたけくんパズル</h1>
+  <div>完成見本:</div>
+  <img id="preview" src="7b2d91a1f350156e.png" width="200">
+  <br>
+
+<canvas id="puzzle" width="400" height="400"></canvas>
+<script>
+const canvas = document.getElementById("puzzle");
+const ctx = canvas.getContext("2d");
+const size = 4; // 4x4
+const tileSize = canvas.width / size;
+let tiles = [];
+let empty = {x: size-1, y: size-1};
+const img = new Image();
+img.src = "7b2d91a1f350156e.png"; // 1024x1024の画像を読み込み
+
+img.onload = () => {
+  init();
+  shuffle();
+  draw();
+};
+
+    function init() {
+  tiles = [];
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (x === size-1 && y === size-1) {
+        tiles.push(null); // 空きマス
+      } else {
+        tiles.push({x, y});
+      }
+    }
+  }
+  empty = {x: size-1, y: size-1};
+}
+
+function shuffle() {
+  for (let i=0; i<1000; i++) {
+    const moves = [];
+    if (empty.x > 0) moves.push({x: empty.x-1, y: empty.y});
+    if (empty.x < size-1) moves.push({x: empty.x+1, y: empty.y});
+    if (empty.y > 0) moves.push({x: empty.x, y: empty.y-1});
+    if (empty.y < size-1) moves.push({x: empty.x, y: empty.y+1});
+    const move = moves[Math.floor(Math.random()*moves.length)];
+    moveTile(move.x, move.y);
+  }
+}
+    function getNeighbors(x, y) {
+      const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+      return dirs
+        .map(d => ({x:x+d.x, y:y+d.y}))
+        .filter(p => p.x>=0 && p.y>=0 && p.x<size && p.y<size);
+    }
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for (let i=0; i<size*size; i++) {
+    const tile = tiles[i];
+    const x = i % size;
+    const y = Math.floor(i/size);
+    if (tile) {
+      ctx.drawImage(
+        img,
+        tile.x * (img.width / size), tile.y * (img.height / size), img.width / size, img.height / size,
+        x * tileSize, y * tileSize, tileSize, tileSize
+      );
+    } else {
+      empty = {x, y};
+    }
+  }
+  // グリッド線
+  ctx.strokeStyle = "#333";
+  for (let i=0; i<=size; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i*tileSize, 0); ctx.lineTo(i*tileSize, size*tileSize);
+    ctx.moveTo(0, i*tileSize); ctx.lineTo(size*tileSize, i*tileSize);
+    ctx.stroke();
+  }
+}
+
+    function getIndex(x, y) {
+      return y * size + x;
+    }
+
+    function swap(x, y, check=true) {
+      const emptyIndex = getIndex(empty.x, empty.y);
+      const targetIndex = getIndex(x, y);
+      [tiles[emptyIndex], tiles[targetIndex]] = [tiles[targetIndex], tiles[emptyIndex]];
+      draw();
+      if (check && isComplete()) finish();
+    }
+
+    function isAdjacent(x, y) {
+      return (Math.abs(empty.x-x) + Math.abs(empty.y-y) === 1);
+    }
+
+    function isComplete() {
+      for (let i=0; i<tiles.length-1; i++) {
+        const tile = tiles[i];
+        const x = i % size;
+        const y = Math.floor(i/size);
+        if (!tile || tile.x !== x || tile.y !== y) return false;
+      }
+      return true;
+    }
+
+    function finish() {
+      const time = ((Date.now() - startTime) / 1000).toFixed(1);
+      document.getElementById("message").textContent = `🎉 クリア！タイム: ${time}秒`;
+      const tweet = document.getElementById("tweet");
+      tweet.style.display = "inline-block";
+      tweet.href = `https://twitter.com/intent/tweet?text=🍄しいたけくんパズルを${time}秒でクリアしました！&url=${location.href}`;
+    }
+
+    // --- 操作（マウスドラッグ/タップ対応） ---
+    function getTilePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const x = Math.floor((clientX - rect.left) / tileSize);
+      const y = Math.floor((clientY - rect.top) / tileSize);
+      return {x,y};
+    }
+
+    canvas.addEventListener("mousedown", e => {
+      dragging = getTilePos(e);
+    });
+    canvas.addEventListener("mouseup", e => {
+      const pos = getTilePos(e);
+      if (dragging && dragging.x===pos.x && dragging.y===pos.y && isAdjacent(pos.x,pos.y)) {
+        swap(pos.x,pos.y);
+      }
+      dragging = null;
+    });
+
+    canvas.addEventListener("touchstart", e => {
+      dragging = getTilePos(e);
+    });
+    canvas.addEventListener("touchend", e => {
+      const pos = getTilePos(e);
+      if (dragging && dragging.x===pos.x && dragging.y===pos.y && isAdjacent(pos.x,pos.y)) {
+        swap(pos.x,pos.y);
+      }
+      dragging = null;
+    });
+function moveTile(x,y) {
+  if ((Math.abs(empty.x-x)+Math.abs(empty.y-y))===1) {
+    const index = y*size+x;
+    const emptyIndex = empty.y*size+empty.x;
+    tiles[emptyIndex] = tiles[index];
+    tiles[index] = null;
+    empty = {x,y};
+  }
+}
+
+canvas.addEventListener("click", e => {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX-rect.left)/tileSize);
+  const y = Math.floor((e.clientY-rect.top)/tileSize);
+  moveTile(x,y);
+  draw();
+});
+</script>
+</body>
+</html>
