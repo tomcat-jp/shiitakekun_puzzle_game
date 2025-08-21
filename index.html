@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>しいたけスライドパズル</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f0f0f0;
+      font-family: sans-serif;
+      color: #333;
+    }
+    #game-container {
+      aspect-ratio: 9 / 16;
+      width: 100vw;
+      max-width: calc(100vh * 9 / 16);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 10px;
+    }
+    #top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 90%;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    #sample {
+      width: 80px;   /* 見本をやや大きく */
+      height: auto;
+      border: 2px solid #aaa;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    #score {
+      font-size: 1rem;
+      font-weight: bold;
+      flex-grow: 1;
+      text-align: center;
+    }
+    #shuffle-btn {
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 5px;
+      background: #4caf50;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    #shuffle-btn:hover {
+      background: #45a049;
+    }
+    canvas {
+      width: 90%;
+      max-width: 90vmin;
+      background: #ddd;
+      border: 4px solid #666;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      touch-action: none;
+    }
+    #status-message {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <h1>しいたけくんスライドパズル</h1>
+
+    <div id="top-bar">
+      <img id="sample" src="7b2d91a1f350156e.png" alt="見本">
+      <div id="score">時間: 0.0秒</div>
+      <button id="shuffle-btn">再シャッフル</button>
+    </div>
+
+    <div id="status-message"></div>
+    <canvas id="puzzle" width="360" height="360"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("puzzle");
+    const ctx = canvas.getContext("2d");
+    const statusMessage = document.getElementById("status-message");
+    const scoreDisplay = document.getElementById("score");
+    const shuffleBtn = document.getElementById("shuffle-btn");
+
+    const size = 3;
+    let tiles = [];
+    let empty = {};
+    let tileSize;
+    let isSolved = false;
+    let startTime;
+    let timerInterval;
+
+    const img = new Image();
+    img.src = "7b2d91a1f350156e.png";
+    img.onload = startGame;
+
+    function startGame() {
+      tileSize = canvas.width / size;
+      initTiles();
+      shuffleBoard();
+      drawTiles();
+      addEventListeners();
+      startTimer();
+    }
+
+    function initTiles() {
+      tiles = [];
+      let tileIndex = 0;
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (tileIndex < size * size - 1) {
+            tiles.push({ x, y, currentX: x, currentY: y });
+          } else {
+            empty = { x, y };
+          }
+          tileIndex++;
+        }
+      }
+    }
+
+    function shuffleBoard() {
+      for (let i = tiles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+      }
+      let index = 0;
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (!(empty.x === x && empty.y === y)) {
+            tiles[index].currentX = x;
+            tiles[index].currentY = y;
+            index++;
+          }
+        }
+      }
+      isSolved = false;
+      statusMessage.textContent = "";
+      resetTimer();
+      drawTiles();
+    }
+
+    function moveTile(x, y) {
+      if (isSolved) return;
+
+      const targetTile = tiles.find(tile => tile.currentX === x && tile.currentY === y);
+      if (!targetTile) return;
+
+      if (Math.abs(empty.x - x) + Math.abs(empty.y - y) === 1) {
+        const tempEmpty = { ...empty };
+        empty = { x, y };
+        targetTile.currentX = tempEmpty.x;
+        targetTile.currentY = tempEmpty.y;
+
+        drawTiles();
+        checkSolved();
+      }
+    }
+
+function drawTiles() {
+  // 背景をまとめて塗る（空白色）
+  ctx.fillStyle = "#ddd";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // タイルを描画
+  tiles.forEach(tile => {
+    ctx.drawImage(
+      img,
+      tile.x * img.width / size,
+      tile.y * img.height / size,
+      img.width / size,
+      img.height / size,
+      tile.currentX * tileSize,
+      tile.currentY * tileSize,
+      tileSize,
+      tileSize
+    );
+  });
+
+  // 枠線を最後にまとめて描画（オプション）
+  ctx.strokeStyle = "#666";
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
+    }
+  }
+}
+
+
+    function checkSolved() {
+      let solved = tiles.every(tile => tile.x === tile.currentX && tile.y === tile.currentY);
+      if (solved) {
+        isSolved = true;
+        stopTimer();
+        statusMessage.textContent = "おめでとう！クリアです！🎉";
+      }
+    }
+
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(updateTimer, 100);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      startTimer();
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    function updateTimer() {
+      const elapsed = (Date.now() - startTime) / 1000;
+      scoreDisplay.textContent = `時間: ${elapsed.toFixed(1)}秒`;
+    }
+
+    function getCanvasMousePosition(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.floor((e.clientX - rect.left) / tileSize);
+      const y = Math.floor((e.clientY - rect.top) / tileSize);
+      return { x, y };
+    }
+
+    function getCanvasTouchPosition(e) {
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = Math.floor((touch.clientX - rect.left) / tileSize);
+      const y = Math.floor((touch.clientY - rect.top) / tileSize);
+      return { x, y };
+    }
+
+    function handleInteraction(e) {
+      e.preventDefault();
+      const pos = e.type.startsWith("mouse") ? getCanvasMousePosition(e) : getCanvasTouchPosition(e);
+      moveTile(pos.x, pos.y);
+    }
+
+    function addEventListeners() {
+      canvas.addEventListener("mousedown", handleInteraction);
+      /*canvas.addEventListener("touchstart", handleInteraction, { passive: false });*/
+      shuffleBtn.addEventListener("click", shuffleBoard);
+    }
+  </script>
+</body>
+</html>
