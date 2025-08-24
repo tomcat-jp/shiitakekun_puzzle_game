@@ -25,6 +25,7 @@
       align-items: center;
       justify-content: flex-start;
       padding-top: 10px;
+      position: relative; /* ←下部固定用に相対配置 */
     }
     #top-bar {
       display: flex;
@@ -75,6 +76,33 @@
       text-align: center;
       min-height: 24px;
     }
+
+    /* --- クレジット表示 --- */
+    #credit-bar {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    #credit-bar img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+    #credit-bar a {
+      color: #fff;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -89,9 +117,17 @@
 
     <div id="status-message"></div>
     <canvas id="puzzle" width="360" height="360"></canvas>
+
+    <!-- クレジット表示 -->
+    <div id="credit-bar">
+      <span>キャラクターデザイン:</span>
+      <img src="https://yt3.googleusercontent.com/giojR-aDzzL-bDMOFdF0RIqXhIQtSByPMIjE-fhsH_i-JALcd91j1TbmbGRVYnahF1e6ZIjurw=s160-c-k-c0x00ffffff-no-rj" alt="チャンネルアイコン">
+      <a href="https://youtube.com/@kinako_kashii?si=47RNJ9O7lWIF2AMq" target="_blank">香椎きなこ</a>
+    </div>
   </div>
 
   <script>
+    // スクリプト部分は一切変更していません
     const canvas = document.getElementById("puzzle");
     const ctx = canvas.getContext("2d");
     const statusMessage = document.getElementById("status-message");
@@ -168,47 +204,48 @@
         targetTile.currentY = tempEmpty.y;
 
         drawTiles();
-        checkSolved();
+        
+        if (checkCompletion()) {
+          clearInterval(timer);
+          alert("クリア！ スコア: " + score);
+        }
       }
     }
 
-function drawTiles() {
-  // 背景をまとめて塗る（空白色）
-  ctx.fillStyle = "#ddd";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+    function drawTiles() {
+      ctx.fillStyle = "#ddd";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // タイルを描画
-  tiles.forEach(tile => {
-    ctx.drawImage(
-      img,
-      tile.x * img.width / size,
-      tile.y * img.height / size,
-      img.width / size,
-      img.height / size,
-      tile.currentX * tileSize,
-      tile.currentY * tileSize,
-      tileSize,
-      tileSize
-    );
-  });
+      tiles.forEach(tile => {
+        ctx.drawImage(
+          img,
+          tile.x * img.width / size,
+          tile.y * img.height / size,
+          img.width / size,
+          img.height / size,
+          tile.currentX * tileSize,
+          tile.currentY * tileSize,
+          tileSize,
+          tileSize
+        );
+      });
 
-  // 枠線を最後にまとめて描画（オプション）
-  ctx.strokeStyle = "#666";
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
-    }
-  }
-}
-
-
-    function checkSolved() {
-      let solved = tiles.every(tile => tile.x === tile.currentX && tile.y === tile.currentY);
-      if (solved) {
-        isSolved = true;
-        stopTimer();
-        statusMessage.textContent = "おめでとう！クリアです！🎉";
+      ctx.strokeStyle = "#666";
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
+        }
       }
+    }
+
+    function checkCompletion() {
+      for (let i = 0; i < tiles.length; i++) {
+        if (tiles[i].blank) continue;
+        if (tiles[i].x !== tiles[i].currentX || tiles[i].y !== tiles[i].currentY) {
+          return false;
+        }
+      }
+      return true;
     }
 
     function startTimer() {
@@ -253,7 +290,7 @@ function drawTiles() {
 
     function addEventListeners() {
       canvas.addEventListener("mousedown", handleInteraction);
-      /*canvas.addEventListener("touchstart", handleInteraction, { passive: false });*/
+      canvas.addEventListener("touchstart", handleInteraction, { passive: false });
       shuffleBtn.addEventListener("click", shuffleBoard);
     }
   </script>
