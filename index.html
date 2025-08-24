@@ -3,197 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>しいたけスライドパズル</title>
+  <title>しいたけくんパズル</title>
   <style>
     body {
       margin: 0;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
-      background: #f0f0f0;
+      background: #222;
       font-family: sans-serif;
-      color: #333;
+      color: #fff;
     }
     #game-container {
-      aspect-ratio: 9 / 16;
-      width: 100vw;
-      max-width: calc(100vh * 9 / 16);
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 450px;
+      aspect-ratio: 9/16;
+      background: #333;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      padding-top: 10px;
-      position: relative; /* ←下部固定用に相対配置 */
     }
-    #top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    #puzzle-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 2px;
       width: 90%;
-      margin-bottom: 10px;
-      gap: 10px;
-    }
-    #sample {
-      width: 80px;   /* 見本をやや大きく */
-      height: auto;
-      border: 2px solid #aaa;
-      border-radius: 5px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    #score {
-      font-size: 1rem;
-      font-weight: bold;
-      flex-grow: 1;
-      text-align: center;
-    }
-    #shuffle-btn {
-      padding: 6px 12px;
-      font-size: 0.9rem;
-      border: none;
-      border-radius: 5px;
-      background: #4caf50;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    #shuffle-btn:hover {
-      background: #45a049;
-    }
-    canvas {
-      width: 90%;
-      max-width: 90vmin;
-      background: #ddd;
-      border: 4px solid #666;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      touch-action: none;
-    }
-    #status-message {
+      max-width: 400px;
+      aspect-ratio: 1/1;
       margin-top: 10px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      text-align: center;
-      min-height: 24px;
     }
-
-    /* --- クレジット表示 --- */
-    #credit-bar {
-      position: absolute;
+    .tile {
+      background-size: 300% 300%;
+      cursor: pointer;
+    }
+    .hidden {
+      background: none;
+    }
+    #preview {
+      margin: 5px 0;
+      width: 100px;
+      height: 100px;
+      background-size: cover;
+      border: 2px solid #fff;
+    }
+    #controls {
+      margin: 10px 0;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    #status {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+    /* フッター（クレジット） */
+    #footer {
+      position: fixed;
       bottom: 0;
       left: 50%;
       transform: translateX(-50%);
       width: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      color: white;
-      text-align: center;
-      padding: 8px;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    #credit-bar img {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-    }
-    #credit-bar a {
+      max-width: 450px;
+      background: rgba(0,0,0,0.6);
       color: #fff;
-      text-decoration: underline;
+      text-align: center;
+      padding: 6px;
+      font-size: 12px;
+    }
+    #footer img {
+      vertical-align: middle;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    #footer a {
+      color: #1DA1F2;
+      text-decoration: none;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div id="game-container">
-    <h1>しいたけくんスライドパズル</h1>
-
-    <div id="top-bar">
-      <img id="sample" src="7b2d91a1f350156e.png" alt="見本">
-      <div id="score">時間: 0.0秒</div>
-      <button id="shuffle-btn">再シャッフル</button>
+    <div id="preview"></div>
+    <div id="controls">
+      <button id="shuffleBtn">再シャッフル</button>
+      <span id="timer">経過時間: 0.0 秒</span>
     </div>
-
-    <div id="status-message"></div>
-    <canvas id="puzzle" width="360" height="360"></canvas>
-
-    <!-- クレジット表示 -->
-    <div id="credit-bar">
-      <span>キャラクターデザイン:</span>
-      <img src="https://yt3.googleusercontent.com/giojR-aDzzL-bDMOFdF0RIqXhIQtSByPMIjE-fhsH_i-JALcd91j1TbmbGRVYnahF1e6ZIjurw=s160-c-k-c0x00ffffff-no-rj" alt="チャンネルアイコン">
-      <a href="https://youtube.com/@kinako_kashii?si=47RNJ9O7lWIF2AMq" target="_blank">香椎きなこ</a>
+    <div id="puzzle-container"></div>
+    <div id="status"></div>
+    <div id="footer">
+      キャラクターデザイン　
+      <img src="https://yt3.googleusercontent.com/giojR-aDzzL-bDMOFdF0RIqXhIQtSByPMIjE-fhsH_i-JALcd91j1TbmbGRVYnahF1e6ZIjurw=s160-c-k-c0x00ffffff-no-rj" alt="香椎きなこ">
+      <a href="https://www.youtube.com/@Kinako_Kashii" target="_blank">香椎きなこ</a>
     </div>
   </div>
 
   <script>
-    // スクリプト部分は一切変更していません
-    const canvas = document.getElementById("puzzle");
-    const ctx = canvas.getContext("2d");
-    const statusMessage = document.getElementById("status-message");
-    const scoreDisplay = document.getElementById("score");
-    const shuffleBtn = document.getElementById("shuffle-btn");
+    const PUZZLE_SIZE = 3;
+    const puzzleContainer = document.getElementById("puzzle-container");
+    const preview = document.getElementById("preview");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const timerDisplay = document.getElementById("timer");
+    const statusMessage = document.getElementById("status");
 
-    const size = 3;
+    const imageUrl = "7b2d91a1f350156e.png"; // 差し替えてください
+    preview.style.backgroundImage = `url(${imageUrl})`;
+
     let tiles = [];
-    let empty = {};
-    let tileSize;
+    let empty = { x: PUZZLE_SIZE - 1, y: PUZZLE_SIZE - 1 };
     let isSolved = false;
-    let startTime;
-    let timerInterval;
-
-    const img = new Image();
-    img.src = "7b2d91a1f350156e.png";
-    img.onload = startGame;
-
-    function startGame() {
-      tileSize = canvas.width / size;
-      initTiles();
-      shuffleBoard();
-      drawTiles();
-      addEventListeners();
-      startTimer();
-    }
+    let timerInterval = null;
+    let elapsedTime = 0;
 
     function initTiles() {
       tiles = [];
-      let tileIndex = 0;
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          if (tileIndex < size * size - 1) {
-            tiles.push({ x, y, currentX: x, currentY: y });
-          } else {
-            empty = { x, y };
-          }
-          tileIndex++;
+      puzzleContainer.innerHTML = "";
+      for (let y = 0; y < PUZZLE_SIZE; y++) {
+        for (let x = 0; x < PUZZLE_SIZE; x++) {
+          if (x === PUZZLE_SIZE - 1 && y === PUZZLE_SIZE - 1) continue; // 空白
+          const tile = document.createElement("div");
+          tile.classList.add("tile");
+          tile.style.backgroundImage = `url(${imageUrl})`;
+          tile.style.backgroundPosition = `${(-x * 100) / (PUZZLE_SIZE - 1)}% ${(-y * 100) / (PUZZLE_SIZE - 1)}%`;
+          tile.dataset.x = x;
+          tile.dataset.y = y;
+          puzzleContainer.appendChild(tile);
+          tiles.push({ element: tile, x, y, currentX: x, currentY: y });
+          tile.addEventListener("click", () => moveTile(tile.currentX, tile.currentY));
         }
       }
+      empty = { x: PUZZLE_SIZE - 1, y: PUZZLE_SIZE - 1 };
     }
 
-    function shuffleBoard() {
-      for (let i = tiles.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-      }
-      let index = 0;
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          if (!(empty.x === x && empty.y === y)) {
-            tiles[index].currentX = x;
-            tiles[index].currentY = y;
-            index++;
-          }
-        }
-      }
-      isSolved = false;
-      statusMessage.textContent = "";
-      resetTimer();
-      drawTiles();
+    function drawTiles() {
+      tiles.forEach(tile => {
+        tile.element.style.gridColumnStart = tile.currentX + 1;
+        tile.element.style.gridRowStart = tile.currentY + 1;
+      });
     }
 
     function moveTile(x, y) {
       if (isSolved) return;
-
       const targetTile = tiles.find(tile => tile.currentX === x && tile.currentY === y);
       if (!targetTile) return;
 
@@ -202,97 +161,80 @@
         empty = { x, y };
         targetTile.currentX = tempEmpty.x;
         targetTile.currentY = tempEmpty.y;
-
         drawTiles();
-        
+
         if (checkCompletion()) {
-          clearInterval(timer);
-          alert("クリア！ スコア: " + score);
-        }
-      }
-    }
+          stopTimer();
+          isSolved = true;
+          const finalTime = elapsedTime.toFixed(1);
+          statusMessage.innerHTML = `🎉 クリアタイム ${finalTime} 秒です！<br>おめでとうございます 🎉`;
 
-    function drawTiles() {
-      ctx.fillStyle = "#ddd";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+          // X共有ボタン
+          const shareText = `#しいたけくんパズル\nスコア ${finalTime} 秒でクリアしました！！\n#きなーこ見て\nhttps://your-puzzle-game-url.example`;
+          const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
 
-      tiles.forEach(tile => {
-        ctx.drawImage(
-          img,
-          tile.x * img.width / size,
-          tile.y * img.height / size,
-          img.width / size,
-          img.height / size,
-          tile.currentX * tileSize,
-          tile.currentY * tileSize,
-          tileSize,
-          tileSize
-        );
-      });
+          const shareBtn = document.createElement("a");
+          shareBtn.href = twitterUrl;
+          shareBtn.target = "_blank";
+          shareBtn.textContent = "Xで共有する";
+          shareBtn.style.display = "inline-block";
+          shareBtn.style.marginTop = "10px";
+          shareBtn.style.padding = "8px 16px";
+          shareBtn.style.background = "#1DA1F2";
+          shareBtn.style.color = "#fff";
+          shareBtn.style.borderRadius = "6px";
+          shareBtn.style.textDecoration = "none";
+          shareBtn.style.fontWeight = "bold";
 
-      ctx.strokeStyle = "#666";
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
+          statusMessage.appendChild(document.createElement("br"));
+          statusMessage.appendChild(shareBtn);
         }
       }
     }
 
     function checkCompletion() {
       for (let i = 0; i < tiles.length; i++) {
-        if (tiles[i].blank) continue;
-        if (tiles[i].x !== tiles[i].currentX || tiles[i].y !== tiles[i].currentY) {
-          return false;
-        }
+        if (tiles[i].currentX === empty.x && tiles[i].currentY === empty.y) continue;
+        if (tiles[i].x !== tiles[i].currentX || tiles[i].y !== tiles[i].currentY) return false;
       }
       return true;
     }
 
-    function startTimer() {
-      startTime = Date.now();
-      timerInterval = setInterval(updateTimer, 100);
+    function shuffleTiles() {
+      for (let i = 0; i < 1000; i++) {
+        const neighbors = tiles.filter(t =>
+          Math.abs(t.currentX - empty.x) + Math.abs(t.currentY - empty.y) === 1
+        );
+        const randomTile = neighbors[Math.floor(Math.random() * neighbors.length)];
+        const tempEmpty = { ...empty };
+        empty = { x: randomTile.currentX, y: randomTile.currentY };
+        randomTile.currentX = tempEmpty.x;
+        randomTile.currentY = tempEmpty.y;
+      }
+      drawTiles();
+      isSolved = false;
+      elapsedTime = 0;
+      statusMessage.textContent = "";
+      startTimer();
     }
 
-    function resetTimer() {
-      clearInterval(timerInterval);
-      startTimer();
+    function startTimer() {
+      stopTimer();
+      timerInterval = setInterval(() => {
+        elapsedTime += 0.1;
+        timerDisplay.textContent = `経過時間: ${elapsedTime.toFixed(1)} 秒`;
+      }, 100);
     }
 
     function stopTimer() {
       clearInterval(timerInterval);
     }
 
-    function updateTimer() {
-      const elapsed = (Date.now() - startTime) / 1000;
-      scoreDisplay.textContent = `時間: ${elapsed.toFixed(1)}秒`;
-    }
+    shuffleBtn.addEventListener("click", shuffleTiles);
 
-    function getCanvasMousePosition(e) {
-      const rect = canvas.getBoundingClientRect();
-      const x = Math.floor((e.clientX - rect.left) / tileSize);
-      const y = Math.floor((e.clientY - rect.top) / tileSize);
-      return { x, y };
-    }
-
-    function getCanvasTouchPosition(e) {
-      const rect = canvas.getBoundingClientRect();
-      const touch = e.touches[0];
-      const x = Math.floor((touch.clientX - rect.left) / tileSize);
-      const y = Math.floor((touch.clientY - rect.top) / tileSize);
-      return { x, y };
-    }
-
-    function handleInteraction(e) {
-      e.preventDefault();
-      const pos = e.type.startsWith("mouse") ? getCanvasMousePosition(e) : getCanvasTouchPosition(e);
-      moveTile(pos.x, pos.y);
-    }
-
-    function addEventListeners() {
-      canvas.addEventListener("mousedown", handleInteraction);
-      canvas.addEventListener("touchstart", handleInteraction, { passive: false });
-      shuffleBtn.addEventListener("click", shuffleBoard);
-    }
+    initTiles();
+    drawTiles();
+    shuffleTiles();
   </script>
 </body>
 </html>
