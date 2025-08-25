@@ -2,256 +2,234 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>しいたけくんスライドパズル</title>
+  <title>しいたけくんパズル</title>
   <style>
     body {
       margin: 0;
-      background: #222;
+      font-family: sans-serif;
+      background: #f0f0f0;
       display: flex;
       flex-direction: column;
+      align-items: center;
       justify-content: flex-start;
-      align-items: center;
       height: 100vh;
-      font-family: sans-serif;
-      color: white;
     }
-    #info {
-      margin: 10px;
+    #header {
+      width: 100%;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
+      padding: 5px 10px;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    #sample {
+    #preview {
       width: 50px;
       height: 50px;
-      border: 1px solid #fff;
-      border-radius: 6px;
-      object-fit: cover;
+      border: 1px solid #ccc;
+      margin-right: 10px;
+      background-size: cover;
+      background-position: center;
+    }
+    #controls {
+      display: flex;
+      align-items: center;
     }
     #timer {
-      font-size: 16px;
+      font-size: 14px;
+      margin: 0 10px;
     }
-    canvas {
-      background: #000;
-      touch-action: none;
-      border-radius: 12px;
-      margin-top: 8px;
+    #board {
+      margin-top: 10px;
+      position: relative;
+      width: 90vmin;
+      height: 90vmin;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      border: 2px solid #000;
     }
-    #tweetBtn {
-      display: none;
-      margin-top: 12px;
-      padding: 10px 18px;
-      background: #1DA1F2;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-size: 16px;
+    .tile {
+      border: 1px solid #666; /* ← グリッド線 */
+      background-size: 300% 300%;
+      background-repeat: no-repeat;
       cursor: pointer;
+      transition: none; /* 即時切替 */
     }
-    /* クレジット帯 */
     #credit {
       position: fixed;
       bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.6);
-      padding: 5px 12px;
-      display: flex;
-      align-items: center;
-      border-radius: 10px 10px 0 0;
+      width: 100%;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      text-align: center;
       font-size: 12px;
+      padding: 5px;
     }
     #credit img {
-      width: 28px;
-      height: 28px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      margin-right: 6px;
+      vertical-align: middle;
+      margin-right: 5px;
     }
-    #credit a {
-      color: white;
-      text-decoration: none;
+    #shareButton {
+      display: none;
+      margin-top: 10px;
+      padding: 5px 10px;
+      background: #1DA1F2;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div id="info">
-    <!-- 見本画像 -->
-    <img id="sample" src="7b2d91a1f350156e.png" alt="見本">
-    <div>
-      <div id="timer">タイム: 0 秒</div>
-      <button onclick="shuffle()">再シャッフル</button>
+  <div id="header">
+    <div id="controls">
+      <div id="preview"></div>
+      <button onclick="shuffleTiles()">再シャッフル</button>
+      <div id="timer">タイム: 0秒</div>
     </div>
   </div>
-  <canvas id="puzzle"></canvas>
-  <button id="tweetBtn">Xで共有する</button>
 
-  <!-- クレジット表記 -->
+  <div id="board"></div>
+  <button id="shareButton" onclick="shareToX()">Xでスコアを共有</button>
+
   <div id="credit">
-    <img src="https://yt3.googleusercontent.com/giojR-aDzzL-bDMOFdF0RIqXhIQtSByPMIjE-fhsH_i-JALcd91j1TbmbGRVYnahF1e6ZIjurw=s160-c-k-c0x00ffffff-no-rj" alt="ch icon">
-    <a href="https://www.youtube.com/@Kinako_Kashii" target="_blank">
-      キャラクターデザイン: 香椎きなこ
-    </a>
+    キャラクターデザイン　
+    <img src="https://yt3.googleusercontent.com/giojR-aDzzL-bDMOFdF0RIqXhIQtSByPMIjE-fhsH_i-JALcd91j1TbmbGRVYnahF1e6ZIjurw=s160-c-k-c0x00ffffff-no-rj" alt="香椎きなこ">
+    <a href="https://www.youtube.com/@Kinako_Kashii" target="_blank" style="color:#fff;">香椎きなこ Youtube</a>
   </div>
 
   <script>
-    const canvas = document.getElementById("puzzle");
-    const ctx = canvas.getContext("2d");
-    const size = 3; // 3x3
-    const img = new Image();
-    img.src = "7b2d91a1f350156e.png"; // 1024x1024画像
+    const board = document.getElementById("board");
+    const timerEl = document.getElementById("timer");
+    const preview = document.getElementById("preview");
+    const shareButton = document.getElementById("shareButton");
 
+    const size = 3;
     let tiles = [];
-    let blank = {x: size-1, y: size-1};
-    let tileSize;
+    let empty = {row: size - 1, col: size - 1};
     let startTime, timerInterval;
-    let solved = false;
+    let gameStarted = false;
+    let elapsedTime = 0;
 
-    function init() {
-      // スマホ幅に収まるよう最大幅を制限
-      let w = Math.min(window.innerWidth * 0.9, 360);
-      canvas.width = w;
-      canvas.height = w;
-      tileSize = canvas.width / size;
-      resetTiles();
-      shuffle();
-      startTimer();
-    }
+    const imgUrl = "7b2d91a1f350156e.png"; // ← あなたの画像ファイル名に差し替えてください
 
-    function resetTiles() {
+    preview.style.backgroundImage = `url(${imgUrl})`;
+
+    function initBoard() {
+      board.innerHTML = "";
       tiles = [];
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          tiles.push({x, y});
+      for (let row = 0; row < size; row++) {
+        tiles[row] = [];
+        for (let col = 0; col < size; col++) {
+          if (row === size-1 && col === size-1) {
+            tiles[row][col] = null;
+            continue;
+          }
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.style.backgroundImage = `url(${imgUrl})`;
+          tile.style.backgroundPosition = `${(-col*100)/(size-1)}% ${(-row*100)/(size-1)}%`;
+          tile.addEventListener("click", () => moveTile(row, col));
+          board.appendChild(tile);
+          tiles[row][col] = tile;
         }
       }
-      blank = {x: size-1, y: size-1};
     }
 
-    function shuffle() {
-      resetTiles();
-      solved = false;
-      startTimer();
-      for (let i = 0; i < 200; i++) {
-        let neighbors = getNeighbors(blank);
+    function shuffleTiles() {
+      // 空白リセット
+      empty = {row: size-1, col: size-1};
+      let moves = 100;
+      for (let i=0; i<moves; i++) {
+        let neighbors = getNeighbors(empty.row, empty.col);
         let move = neighbors[Math.floor(Math.random() * neighbors.length)];
-        moveTile(move.x, move.y);
+        swap(empty, move);
+        empty = move;
       }
-      draw();
-    }
-
-    function startTimer() {
-      clearInterval(timerInterval);
+      gameStarted = true;
       startTime = Date.now();
-      timerInterval = setInterval(() => {
-        if (!solved) {
-          const elapsed = Math.floor((Date.now() - startTime) / 1000);
-          document.getElementById("timer").innerText = `タイム: ${elapsed} 秒`;
-        }
-      }, 1000);
-    }
-
-    function stopTimer() {
       clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+      shareButton.style.display = "none";
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      tiles.forEach((tile, i) => {
-        const col = i % size;
-        const row = Math.floor(i / size);
-        if (!(col === blank.x && row === blank.y)) {
-          ctx.drawImage(
-            img,
-            tile.x * (img.width / size),
-            tile.y * (img.height / size),
-            img.width / size,
-            img.height / size,
-            col * tileSize,
-            row * tileSize,
-            tileSize,
-            tileSize
-          );
-        }
-      });
-
-      // グリッド線
-      ctx.strokeStyle = "black";
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= size; i++) {
-        ctx.beginPath();
-        ctx.moveTo(0, i * tileSize);
-        ctx.lineTo(canvas.width, i * tileSize);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(i * tileSize, 0);
-        ctx.lineTo(i * tileSize, canvas.height);
-        ctx.stroke();
-      }
+    function getNeighbors(row, col) {
+      let neighbors = [];
+      if (row > 0) neighbors.push({row: row-1, col});
+      if (row < size-1) neighbors.push({row: row+1, col});
+      if (col > 0) neighbors.push({row, col: col-1});
+      if (col < size-1) neighbors.push({row, col: col+1});
+      return neighbors;
     }
 
-    function getNeighbors(blank) {
-      let moves = [];
-      if (blank.x > 0) moves.push({x: blank.x-1, y: blank.y});
-      if (blank.x < size-1) moves.push({x: blank.x+1, y: blank.y});
-      if (blank.y > 0) moves.push({x: blank.x, y: blank.y-1});
-      if (blank.y < size-1) moves.push({x: blank.x, y: blank.y+1});
-      return moves;
+    function swap(a, b) {
+      let temp = tiles[a.row][a.col];
+      tiles[a.row][a.col] = tiles[b.row][b.col];
+      tiles[b.row][b.col] = temp;
     }
 
-    function moveTile(x, y) {
-      if ((Math.abs(blank.x - x) + Math.abs(blank.y - y)) === 1) {
-        const blankIndex = blank.y * size + blank.x;
-        const tileIndex = y * size + x;
-        [tiles[blankIndex], tiles[tileIndex]] = [tiles[tileIndex], tiles[blankIndex]];
-        blank = {x, y};
-        draw();
-        checkSolved();
-      }
-    }
-
-    function checkSolved() {
-      for (let i = 0; i < tiles.length; i++) {
-        let correctX = i % size;
-        let correctY = Math.floor(i / size);
-        if (tiles[i].x !== correctX || tiles[i].y !== correctY) {
-          if (!(i === tiles.length-1)) return;
+    function moveTile(row, col) {
+      if (!gameStarted) return;
+      if (Math.abs(row - empty.row) + Math.abs(col - empty.col) === 1) {
+        swap(empty, {row, col});
+        empty = {row, col};
+        render();
+        if (isSolved()) {
+          clearInterval(timerInterval);
+          gameStarted = false;
+          alert(`クリアしました！ タイム: ${elapsedTime}秒\nおめでとうございます`);
+          shareButton.style.display = "block";
         }
       }
-      solved = true;
-      stopTimer();
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      alert(`クリアタイム ${elapsed} 秒です！🎉`);
-      showTweetButton(elapsed);
     }
 
-    function showTweetButton(score) {
-      const btn = document.getElementById("tweetBtn");
-      btn.style.display = "block";
-      btn.onclick = () => {
-        const text = `#しいたけくんパズル\nクリアタイム ${score} 秒でクリアしました！！\n#きなーこ見て\nhttps://your-game-url`;
-        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-        window.open(url, "_blank");
-      };
+    function render() {
+      board.innerHTML = "";
+      for (let row=0; row<size; row++) {
+        for (let col=0; col<size; col++) {
+          if (tiles[row][col]) {
+            board.appendChild(tiles[row][col]);
+          } else {
+            const blank = document.createElement("div");
+            board.appendChild(blank);
+          }
+        }
+      }
     }
 
-    canvas.addEventListener("click", e => {
-      const rect = canvas.getBoundingClientRect();
-      const x = Math.floor((e.clientX - rect.left) / tileSize);
-      const y = Math.floor((e.clientY - rect.top) / tileSize);
-      moveTile(x, y);
-    });
+    function isSolved() {
+      for (let row=0; row<size; row++) {
+        for (let col=0; col<size; col++) {
+          if (row === size-1 && col === size-1) continue; // ← 空白を判定に含めない
+          const tile = tiles[row][col];
+          if (!tile) return false;
+          const bgPos = tile.style.backgroundPosition;
+          const correctPos = `${(-col*100)/(size-1)}% ${(-row*100)/(size-1)}%`;
+          if (bgPos !== correctPos) return false;
+        }
+      }
+      return true;
+    }
 
-    img.onload = () => {
-      init();
-      draw();
-    };
+    function updateTimer() {
+      elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      timerEl.textContent = `タイム: ${elapsedTime}秒`;
+    }
 
-    window.addEventListener("resize", () => {
-      init();
-      draw();
-    });
+    function shareToX() {
+      const text = `#しいたけくんパズル\nクリアタイム ${elapsedTime}秒です！\n#きなーこ見て\nパズルゲームのURL`;
+      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+      window.open(url, "_blank");
+    }
+
+    // 初期化
+    initBoard();
+    shuffleTiles();
   </script>
 </body>
 </html>
