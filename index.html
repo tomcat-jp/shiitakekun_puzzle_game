@@ -50,59 +50,50 @@
       font-size: 16px;
       cursor: pointer;
     }
-/* クレジット表記 */
+/* クレジット全体 */
 #credit {
   position: fixed;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.6);
-  padding: 8px 20px;       /* パディングも縮小 */
-  border-radius: 10px 10px 0 0;
-  font-size: 1em;          /* 元の3分の1（1em基準に変更） */
+  padding: 20px 60px;     /* ← パディングも3倍に調整 */
+  border-radius: 20px 20px 0 0;
+  font-size: 3em;         /* ← 全体を3倍に拡大 */
   color: white;
   display: flex;
   align-items: flex-start;
   justify-content: center;
 }
 
-#credit .credit-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 #credit .role {
-  font-size: 0.5em;        /* 名前より小さめ */
-  margin-bottom: 0.2em;
+  font-size: 0.5em;       /* 名前より少し小さめ（3倍の中で相対的に） */
+  margin-bottom: 0.4em;
   opacity: 0.8;
 }
 
 #credit .name-line {
   display: flex;
   align-items: center;
-  gap: 0.4em;
+  gap: 0.6em;
 }
 
 #credit .name {
-  font-size: 1em;          /* 基準サイズ */
+  font-size: 1em;         /* 親の3emが効いて実質3倍に */
+}
+
+/* アイコンも文字サイズに連動して3倍拡大される */
+#credit .ch-icon {
+  height: 1em;
+  width: auto;
+  border-radius: 50%;
+  vertical-align: middle;
 }
 
 #credit .yt-icon {
   width: 1em;              /* 名前と同じ高さ */
-  height: auto;
-  vertical-align: middle;
-}
-
-#credit a {
-  display: inline-flex;
+  height: auto; 
   align-items: center;
-}
-/* ← ここでアイコンのサイズを文字高さに合わせる */
-#credit .ch-icon {
-  height: 1em;          /* 文字と同じ高さ */
-  width: auto;
-  border-radius: 50%;   /* 丸く表示（YouTubeアイコンっぽく） */
   vertical-align: middle;
 }
 
