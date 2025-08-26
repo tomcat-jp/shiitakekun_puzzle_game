@@ -50,16 +50,16 @@
       font-size: 16px;
       cursor: pointer;
     }
-  /* クレジット表記 */
+/* クレジット表記 */
 #credit {
   position: fixed;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.6);
-  padding: 15px 36px;
+  padding: 8px 20px;       /* パディングも縮小 */
   border-radius: 10px 10px 0 0;
-  font-size: 3em;       /* ベースサイズ：名前用 */
+  font-size: 1em;          /* 元の3分の1（1em基準に変更） */
   color: white;
   display: flex;
   align-items: flex-start;
@@ -73,7 +73,7 @@
 }
 
 #credit .role {
-  font-size: 0.3em;     /* 小さく（名前の30%くらい） */
+  font-size: 0.5em;        /* 名前より小さめ */
   margin-bottom: 0.2em;
   opacity: 0.8;
 }
@@ -81,11 +81,15 @@
 #credit .name-line {
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  gap: 0.4em;
+}
+
+#credit .name {
+  font-size: 1em;          /* 基準サイズ */
 }
 
 #credit .yt-icon {
-  width: 1em;
+  width: 1em;              /* 名前と同じ高さ */
   height: auto;
   vertical-align: middle;
 }
@@ -93,6 +97,13 @@
 #credit a {
   display: inline-flex;
   align-items: center;
+}
+/* ← ここでアイコンのサイズを文字高さに合わせる */
+#credit .ch-icon {
+  height: 1em;          /* 文字と同じ高さ */
+  width: auto;
+  border-radius: 50%;   /* 丸く表示（YouTubeアイコンっぽく） */
+  vertical-align: middle;
 }
 
   </style>
@@ -115,7 +126,8 @@
     <div class="role">キャラクターデザイン</div>
     <div class="name-line">
       <span class="name">香椎きなこ</span>
-      <img src="https://yt3.googleusercontent.com/giojR-aDzzL-bDMOFdF0RIqXhIQtSByPMIjE-fhsH_i-JALcd91j1TbmbGRVYnahF1e6ZIjurw=s160-c-k-c0x00ffffff-no-rj" alt="ch icon">
+        <img src="https://yt3.googleusercontent.com/giojR-aDzzL-bDMOFdF0RIqXhIQtSByPMIjE-fhsH_i-JALcd91j1TbmbGRVYnahF1e6ZIjurw=s160-c-k-c0x00ffffff-no-rj"
+             alt="ch icon" class="ch-icon">
       <a href="https://www.youtube.com/@Kinako_Kashii" target="_blank" title="YouTube チャンネルを開く">
         <img src="yt_icon_rgb.png" alt="YouTube" class="yt-icon">
       </a>
