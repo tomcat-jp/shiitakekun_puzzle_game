@@ -57,9 +57,9 @@
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.6);
-  padding: 20px 60px;     /* ← パディングも3倍に調整 */
-  border-radius: 20px 20px 0 0;
-  font-size: 3em;         /* ← 全体を3倍に拡大 */
+  padding: 8px 20px;
+  border-radius: 10px 10px 0 0;
+  font-size: 1em;       /* これを基準サイズに */
   color: white;
   display: flex;
   align-items: flex-start;
@@ -67,26 +67,26 @@
 }
 
 #credit .role {
-  font-size: 0.5em;       /* 名前より少し小さめ（3倍の中で相対的に） */
-  margin-bottom: 0.4em;
+  font-size: 0.5em;
+  margin-bottom: 0.2em;
   opacity: 0.8;
 }
 
 #credit .name-line {
   display: flex;
   align-items: center;
-  gap: 0.6em;
+  gap: 0.4em;
 }
 
 #credit .name {
-  font-size: 1em;         /* 親の3emが効いて実質3倍に */
+  font-size: 1em;       /* 名前の文字サイズ基準 */
 }
 
-/* アイコンも文字サイズに連動して3倍拡大される */
+/* ← ここでアイコンのサイズを文字高さに合わせる */
 #credit .ch-icon {
-  height: 1em;
+  height: 1em;          /* 文字と同じ高さ */
   width: auto;
-  border-radius: 50%;
+  border-radius: 50%;   /* 丸く表示（YouTubeアイコンっぽく） */
   vertical-align: middle;
 }
 
